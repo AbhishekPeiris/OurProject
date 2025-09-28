@@ -219,16 +219,19 @@ const Payment = () => {
         // Use window.location.href for reliable navigation to customer profile
         window.location.href = "/customer/profile";
       } else if (type === "ground_booking") {
-        // Handle ground booking payment (new code)
+        // Handle ground booking payment
         console.log("Processing ground booking payment:", {
           booking,
           bookingDetails,
         });
 
-        // First create the booking
+        // First create the booking with pending status
         const bookingResponse = await axios.post(
           "http://localhost:5000/api/bookings",
-          booking,
+          {
+            ...booking,
+            status: "pending", // Explicitly set as pending
+          },
           config
         );
 
@@ -257,10 +260,11 @@ const Payment = () => {
         );
 
         if (paymentResponse.data) {
-          // Confirm the booking with the payment ID
+          // Only after successful payment, confirm the booking
           await axios.put(
-            `http://localhost:5000/api/bookings/${createdBooking._id}/confirm`,
+            `http://localhost:5000/api/bookings/${createdBooking._id}`,
             {
+              status: "confirmed",
               paymentId: paymentResponse.data._id,
             },
             config
@@ -273,7 +277,7 @@ const Payment = () => {
           navigate("/customer/profile", {
             state: {
               bookingSuccess: true,
-              booking: createdBooking,
+              booking: { ...createdBooking, status: "confirmed" },
               payment: paymentResponse.data,
             },
           });
@@ -318,8 +322,7 @@ const Payment = () => {
     } catch (err) {
       console.error("Error details:", err.response?.data || err.message);
       setError(
-        `Error processing payment: ${
-          err.response?.data?.message || err.message
+        `Error processing payment: ${err.response?.data?.message || err.message
         }. Please try again.`
       );
     } finally {
@@ -526,10 +529,10 @@ const Payment = () => {
               {loading
                 ? "Processing..."
                 : type === "ground_booking"
-                ? "Pay and Book Ground"
-                : type === "enrollment"
-                ? "Pay and Enroll"
-                : "Pay"}
+                  ? "Pay and Book Ground"
+                  : type === "enrollment"
+                    ? "Pay and Enroll"
+                    : "Pay"}
             </button>
           </div>
         </div>

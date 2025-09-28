@@ -124,7 +124,7 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Create booking
+    // Create booking with pending status (not confirmed)
     const booking = await Booking.create({
       customerId,
       type: "ground",
@@ -138,7 +138,7 @@ export const createBooking = async (req, res) => {
       specialRequirements: specialRequirements || [],
       notes: notes || "",
       amount: parseFloat(amount),
-      status: "pending",
+      status: "pending", // Always start with pending status
     });
 
     // Populate the created booking
@@ -161,7 +161,7 @@ export const createBooking = async (req, res) => {
     res.status(201).json({
       success: true,
       data: populatedBooking,
-      message: "Booking created successfully",
+      message: "Booking created successfully with pending status",
     });
   } catch (error) {
     console.error("Error creating booking:", error);
@@ -527,7 +527,9 @@ export const confirmBooking = async (req, res) => {
   try {
     const { paymentId } = req.body;
 
-    const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id)
+      .populate("customerId", "firstName lastName email")
+      .populate("groundId", "name location pricePerSlot");
 
     if (!booking) {
       return res.status(404).json({
@@ -536,9 +538,19 @@ export const confirmBooking = async (req, res) => {
       });
     }
 
-    // Verify payment exists and is successful
+    // Check if booking is in pending status
+    if (booking.status !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot confirm booking with status: ${booking.status}`,
+      });
+    }
+
+    // Verify payment exists and is successful (if paymentId provided)
     if (paymentId) {
+      const Payment = (await import('../models/Payments.js')).default;
       const payment = await Payment.findById(paymentId);
+
       if (!payment) {
         return res.status(404).json({
           success: false,
@@ -556,8 +568,17 @@ export const confirmBooking = async (req, res) => {
       booking.paymentId = paymentId;
     }
 
+    // Update status to confirmed
     booking.status = "confirmed";
     await booking.save();
+
+    // Create confirmation notification
+    try {
+      const { createBookingNotification } = await import('./notificationController.js');
+      await createBookingNotification('booking_confirmed', booking, 'system');
+    } catch (notifError) {
+      console.error('Error creating confirmation notification:', notifError);
+    }
 
     const populatedBooking = await Booking.findById(booking._id)
       .populate("customerId", "firstName lastName email")
@@ -689,9 +710,8 @@ export const checkGroundAvailability = async (req, res) => {
         conflicts: conflictDetails,
         alternativeMessage:
           "Please select a different time slot, ground slot, or date",
-        suggestion: `Try slot ${
-          parseInt(groundSlot) + 1
-        } or choose a different time`,
+        suggestion: `Try slot ${parseInt(groundSlot) + 1
+          } or choose a different time`,
       });
     }
 
@@ -752,9 +772,8 @@ export const exportBookingsCSV = async (req, res) => {
     // Prepare CSV data
     const csvData = bookings.map((booking) => ({
       "Booking ID": booking._id,
-      "Customer Name": `${booking.customerId?.firstName || ""} ${
-        booking.customerId?.lastName || ""
-      }`.trim(),
+      "Customer Name": `${booking.customerId?.firstName || ""} ${booking.customerId?.lastName || ""
+        }`.trim(),
       "Customer Email": booking.customerId?.email || "N/A",
       "Customer Phone": booking.customerId?.phone || "N/A",
       "Ground Name": booking.groundId?.name || "Unknown Ground",
@@ -771,7 +790,7 @@ export const exportBookingsCSV = async (req, res) => {
         : "N/A",
       "Booking Type": booking.bookingType
         ? booking.bookingType.charAt(0).toUpperCase() +
-          booking.bookingType.slice(1)
+        booking.bookingType.slice(1)
         : "N/A",
       "Amount (LKR)": booking.amount || 0,
       Status: booking.status
@@ -815,8 +834,7 @@ export const exportBookingsCSV = async (req, res) => {
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=bookings_export_${
-        new Date().toISOString().split("T")[0]
+      `attachment; filename=bookings_export_${new Date().toISOString().split("T")[0]
       }.csv`
     );
 

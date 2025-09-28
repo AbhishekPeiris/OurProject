@@ -213,7 +213,7 @@ const GroundBooking = () => {
       if (!availabilityData.success || !availabilityData.available) {
         setError(
           availabilityData.message ||
-            "This time slot is no longer available. Please choose a different time."
+          "This time slot is no longer available. Please choose a different time."
         );
         setBookingLoading(false);
         return;
@@ -677,13 +677,13 @@ const GroundBooking = () => {
                       backgroundColor: availabilityMessage.includes("✅")
                         ? "#f0fdf4"
                         : availabilityMessage.includes("❌")
-                        ? "#fef2f2"
-                        : "#f9fafb",
+                          ? "#fef2f2"
+                          : "#f9fafb",
                       borderColor: availabilityMessage.includes("✅")
                         ? "#bbf7d0"
                         : availabilityMessage.includes("❌")
-                        ? "#fecaca"
-                        : "#e5e7eb",
+                          ? "#fecaca"
+                          : "#e5e7eb",
                     }}
                   >
                     {availabilityChecking ? (
@@ -700,8 +700,8 @@ const GroundBooking = () => {
                           color: availabilityMessage.includes("✅")
                             ? "#16a34a"
                             : availabilityMessage.includes("❌")
-                            ? "#dc2626"
-                            : Brand.body,
+                              ? "#dc2626"
+                              : Brand.body,
                         }}
                       >
                         {availabilityMessage}
@@ -798,6 +798,9 @@ const GroundBooking = () => {
                         </div>
                       </>
                     )}
+                    <div className="pt-2 mt-2 text-xs text-orange-600 border-t">
+                      📝 Note: Your booking will be pending until payment is completed
+                    </div>
                   </div>
                 </div>
 
@@ -825,7 +828,7 @@ const GroundBooking = () => {
                     className="px-8 py-3 font-semibold text-white transition-all duration-200 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{ backgroundColor: Brand.primary }}
                   >
-                    {bookingLoading ? "Processing..." : "Proceed to Payment"}
+                    {bookingLoading ? "Processing..." : "Book Ground (Pending → Payment)"}
                   </button>
                 </div>
               </form>

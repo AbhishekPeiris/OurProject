@@ -336,7 +336,7 @@ const GroundBooking = () => {
       specialRequirements: [],
       notes: "",
       amount: 0,
-      status: "pending",
+      status: "pending", // Default to pending status
     });
   };
 
@@ -1106,6 +1106,10 @@ const GroundBooking = () => {
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    💡 New bookings should start as "Pending" until payment is
+                    confirmed
+                  </p>
                 </div>
               </div>
 
@@ -1553,7 +1557,7 @@ const GroundBooking = () => {
               </button>
               <button
                 onClick={handleDeleteBooking}
-                className="px-8 py-3 font-semibold text-white transition-all duration-200 rounded-lg"
+                className="px-8 py-3 font-semibold text-white transition-all duration-200 bg-red-500 rounded-lg"
                 style={{ backgroundColor: Brand.danger }}
               >
                 Delete Booking
