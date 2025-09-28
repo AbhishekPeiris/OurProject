@@ -21,6 +21,7 @@ import sessionGroundRoutes from './routes/sessionGroundRoutes.js';
 import sessionRequestRoutes from './routes/sessionRequestRoutes.js';
 import coachRoutes from './routes/coaches.js';
 import groundRoutes from './routes/groundRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
 import playerFeedbackRoutes from './routes/playerFeedbackRoutes.js';
 import syncRoutes from './routes/sync.js';
 
@@ -67,6 +68,7 @@ app.use('/api/session-grounds', sessionGroundRoutes);
 app.use('/api/session-requests', sessionRequestRoutes);
 app.use('/api/coaches', coachRoutes);
 app.use('/api/grounds', groundRoutes);
+app.use('/api/bookings', bookingRoutes);
 app.use('/api/player-feedback', playerFeedbackRoutes);
 app.use('/api/sync', syncRoutes);
 
