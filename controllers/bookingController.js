@@ -110,16 +110,6 @@ export const createBooking = async (req, res) => {
             });
         }
 
-        // Validate minimum advance booking (e.g., at least 1 hour in advance)
-        const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-        if (bookingDateTime < oneHourFromNow) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Ground must be booked at least 1 hour in advance. Please select a later time.",
-            });
-        }
-
         // Create booking
         const booking = await Booking.create({
             customerId,
@@ -188,6 +178,8 @@ export const getBookings = async (req, res) => {
             groundId,
             startDate,
             endDate,
+            sortBy = "createdAt",
+            sortOrder = "desc",
         } = req.query;
 
         // Build filter object
@@ -204,13 +196,16 @@ export const getBookings = async (req, res) => {
             };
         }
 
+        // Build sort object
+        const sort = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
+
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
         const bookings = await Booking.find(filter)
-            .populate("customerId", "firstName lastName email")
-            .populate("groundId", "name location pricePerSlot")
+            .populate("customerId", "firstName lastName email phone")
+            .populate("groundId", "name location pricePerSlot facilities")
             .populate("paymentId", "amount status paymentDate")
-            .sort({ createdAt: -1 })
+            .sort(sort)
             .skip(skip)
             .limit(parseInt(limit));
 
@@ -227,6 +222,7 @@ export const getBookings = async (req, res) => {
             },
         });
     } catch (error) {
+        console.error("Error fetching bookings:", error);
         res.status(500).json({
             success: false,
             message: "Error fetching bookings",
@@ -279,14 +275,6 @@ export const updateBooking = async (req, res) => {
             });
         }
 
-        // Check if booking can be modified (not completed or cancelled)
-        if (["completed", "cancelled"].includes(booking.status)) {
-            return res.status(400).json({
-                success: false,
-                message: "Cannot modify completed or cancelled bookings",
-            });
-        }
-
         const updatedBooking = await Booking.findByIdAndUpdate(
             req.params.id,
             req.body,
@@ -317,6 +305,44 @@ export const updateBooking = async (req, res) => {
     }
 };
 
+// @desc    Delete booking (Admin)
+// @route   DELETE /api/bookings/:id
+// @access  Private (Admin)
+export const deleteBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: "Booking not found",
+            });
+        }
+
+        // If booking has payment, handle refund logic here if needed
+        if (booking.paymentId) {
+            // You might want to handle refund logic here
+            console.log(
+                `Booking ${booking._id} with payment ${booking.paymentId} is being deleted`
+            );
+        }
+
+        await Booking.findByIdAndDelete(req.params.id);
+
+        res.status(200).json({
+            success: true,
+            message: "Booking deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error deleting booking:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error deleting booking",
+            error: error.message,
+        });
+    }
+};
+
 // @desc    Cancel booking
 // @route   PUT /api/bookings/:id/cancel
 // @access  Private
@@ -329,44 +355,48 @@ export const cancelBooking = async (req, res) => {
         if (!booking) {
             return res.status(404).json({
                 success: false,
-                message: 'Booking not found'
+                message: "Booking not found",
             });
         }
 
-        if (booking.status === 'cancelled') {
+        if (booking.status === "cancelled") {
             return res.status(400).json({
                 success: false,
-                message: 'Booking is already cancelled'
+                message: "Booking is already cancelled",
             });
         }
 
         // Check if booking can be cancelled (not too close to booking time)
-        const bookingDateTime = new Date(`${booking.bookingDate.toISOString().split('T')[0]}T${booking.startTime}`);
+        const bookingDateTime = new Date(
+            `${booking.bookingDate.toISOString().split("T")[0]}T${booking.startTime}`
+        );
         const now = new Date();
         const hoursUntilBooking = (bookingDateTime - now) / (1000 * 60 * 60);
 
-        if (hoursUntilBooking < 2 && booking.status === 'confirmed') {
+        if (hoursUntilBooking < 2 && booking.status === "confirmed") {
             return res.status(400).json({
                 success: false,
-                message: 'Cannot cancel booking less than 2 hours before start time'
+                message: "Cannot cancel booking less than 2 hours before start time",
             });
         }
 
-        booking.status = 'cancelled';
-        booking.notes = booking.notes ? `${booking.notes}\nCancellation reason: ${reason}` : `Cancellation reason: ${reason}`;
+        booking.status = "cancelled";
+        booking.notes = booking.notes
+            ? `${booking.notes}\nCancellation reason: ${reason}`
+            : `Cancellation reason: ${reason}`;
 
         await booking.save();
 
         res.status(200).json({
             success: true,
             data: booking,
-            message: 'Booking cancelled successfully'
+            message: "Booking cancelled successfully",
         });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error cancelling booking',
-            error: error.message
+            message: "Error cancelling booking",
+            error: error.message,
         });
     }
 };

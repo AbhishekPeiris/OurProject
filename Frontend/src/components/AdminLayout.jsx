@@ -34,7 +34,7 @@ export default function AdminLayout() {
             navigate('/login');
         }
     };
-    
+
     // Helper to determine if a link is active
     const isActive = (path) => location.pathname === path;
 
@@ -42,12 +42,11 @@ export default function AdminLayout() {
         <div className="min-h-screen flex bg-background">
             {showSidebar && <div className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden" onClick={() => setShowSidebar(false)}></div>}
 
-            <aside className={`fixed top-0 left-0 h-screen w-64 bg-surface shadow-xl transform transition-transform duration-300 z-40 ${
-                showSidebar ? 'translate-x-0' : '-translate-x-full'
-            } lg:translate-x-0 lg:flex-shrink-0`}>
+            <aside className={`fixed top-0 left-0 h-screen w-64 bg-surface shadow-xl transform transition-transform duration-300 z-40 ${showSidebar ? 'translate-x-0' : '-translate-x-full'
+                } lg:translate-x-0 lg:flex-shrink-0`}>
                 <div className="p-4 flex flex-col h-full">
                     <div className="mb-8 text-center">
-                         <img 
+                        <img
                             src={userInfo?.profileImageURL ? `http://localhost:5000${userInfo.profileImageURL}` : `https://placehold.co/100x100/072679/FFFFFF?text=A`}
                             alt="Admin Profile"
                             className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-primary"
@@ -59,46 +58,46 @@ export default function AdminLayout() {
                     <nav className="space-y-1 flex-grow overflow-y-auto">
                         <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">My Account</p>
                         <Link to="/admin/profile" className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${isActive('/admin/profile') ? 'bg-secondary text-white' : 'text-text-body hover:bg-gray-100'}`}>
-                           <UserCircleIcon /> My Profile
+                            <UserCircleIcon /> My Profile
                         </Link>
-                         <Link to="/admin/edit-account" className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${isActive('/admin/edit-account') ? 'bg-secondary text-white' : 'text-text-body hover:bg-gray-100'}`}>
-                           <CogIcon /> Edit Profile
+                        <Link to="/admin/edit-account" className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${isActive('/admin/edit-account') ? 'bg-secondary text-white' : 'text-text-body hover:bg-gray-100'}`}>
+                            <CogIcon /> Edit Profile
                         </Link>
 
                         <p className="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase">Management</p>
-                         <Link to="/admin/users" className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${isActive('/admin/users') ? 'bg-secondary text-white' : 'text-text-body hover:bg-gray-100'}`}>
-                           <UserGroupIcon /> All Users
+                        <Link to="/admin/users" className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${isActive('/admin/users') ? 'bg-secondary text-white' : 'text-text-body hover:bg-gray-100'}`}>
+                            <UserGroupIcon /> All Users
                         </Link>
                         <a href="/admin/payments" className="flex items-center px-4 py-2 rounded-lg font-medium text-text-body hover:bg-gray-100">
-                           <CreditCardIcon /> All Payments
+                            <CreditCardIcon /> All Payments
                         </a>
                         <Link to="/admin/payroll" className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${isActive('/admin/payroll') ? 'bg-secondary text-white' : 'text-text-body hover:bg-gray-100'}`}>
-                           <PayrollIcon /> Payroll Management
+                            <PayrollIcon /> Payroll Management
                         </Link>
                         <a href="/admin/inventory" className="flex items-center px-4 py-2 rounded-lg font-medium text-text-body hover:bg-gray-100">
-                           <PlusCircleIcon /> Inventory
+                            <PlusCircleIcon /> Inventory
                         </a>
                         <a href="/admin/orders" className="flex items-center px-4 py-2 rounded-lg font-medium text-text-body hover:bg-gray-100">
-                           <ShoppingBagIcon /> Orders
-                        </a>
-                         <a href="#" className="flex items-center px-4 py-2 rounded-lg font-medium text-text-body hover:bg-gray-100">
-                           <CalendarIcon /> Coach Bookings
-                        </a>
-                         <a href="#" className="flex items-center px-4 py-2 rounded-lg font-medium text-text-body hover:bg-gray-100">
-                           <GlobeIcon /> Ground Bookings
-                        </a>
-                         <a href="#" className="flex items-center px-4 py-2 rounded-lg font-medium text-text-body hover:bg-gray-100">
-                           <WrenchIcon /> Repairs
+                            <ShoppingBagIcon /> Orders
                         </a>
                         <a href="#" className="flex items-center px-4 py-2 rounded-lg font-medium text-text-body hover:bg-gray-100">
-                           <ChatAlt2Icon /> Feedbacks
+                            <CalendarIcon /> Coach Bookings
                         </a>
-                         
+                        <Link to="/admin/ground-booking" className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${isActive('/admin/ground-booking') ? 'bg-secondary text-white' : 'text-text-body hover:bg-gray-100'}`}>
+                            <GlobeIcon /> Ground Bookings
+                        </Link>
+                        <a href="#" className="flex items-center px-4 py-2 rounded-lg font-medium text-text-body hover:bg-gray-100">
+                            <WrenchIcon /> Repairs
+                        </a>
+                        <a href="#" className="flex items-center px-4 py-2 rounded-lg font-medium text-text-body hover:bg-gray-100">
+                            <ChatAlt2Icon /> Feedbacks
+                        </a>
+
                     </nav>
 
                     <div className="mt-auto">
                         <button onClick={handleLogout} className="w-full flex items-center justify-center px-4 py-3 rounded-lg font-medium text-red-500 bg-red-100 hover:bg-red-200 transition-colors">
-                           <LogoutIcon /> Logout
+                            <LogoutIcon /> Logout
                         </button>
                     </div>
                 </div>
@@ -106,7 +105,7 @@ export default function AdminLayout() {
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col lg:ml-64">
-                 <header className="p-4 bg-surface shadow-md lg:hidden sticky top-0 z-20">
+                <header className="p-4 bg-surface shadow-md lg:hidden sticky top-0 z-20">
                     <button onClick={() => setShowSidebar(true)}>
                         <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                     </button>

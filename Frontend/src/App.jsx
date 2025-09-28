@@ -88,6 +88,7 @@ import TestPage from "./pages/TestPage";
 import RepairRevenue from "./pages/RepairRevenue";
 import GroundBooking from "./pages/GroundBooking.jsx";
 import MyBookings from "./pages/MyBookings.jsx";
+import AdminGroundBooking from "./pages/AdminGround/GroundBooking.jsx";
 
 // Wrapper to pass URL param
 function CustomerDashboardWrapper() {
@@ -188,8 +189,10 @@ export default function App() {
                 <Route path="profile" element={<Profile />} />
                 <Route path="edit-account" element={<EditAccount />} />
                 <Route path="orders" element={<ListOrders />} />
+                <Route path="ground-booking" element={<AdminGroundBooking />} />
             </Route>
         </Route> */}
+
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/dashboard" />} />
           <Route path="dashboard" element={<AdminDashboardOverview />} />
@@ -200,7 +203,10 @@ export default function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="edit-account" element={<EditAccount />} />
           <Route path="orders" element={<ListOrders />} />
+          <Route path="ground-booking" element={<AdminGroundBooking />} />
         </Route>
+
+
         {/* --- 📦 ORDER MANAGER ROUTES --- */}
         <Route element={<ProtectedRoute allowedRoles={["order_manager"]} />}>
           <Route path="/order_manager" element={<OrderManagerLayout />}>
