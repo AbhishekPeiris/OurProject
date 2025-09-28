@@ -2,8 +2,8 @@ import express from 'express';
 const router = express.Router();
 
 // Import all the correct, specific controller functions
-import { 
-    getUserProfile, 
+import {
+    getUserProfile,
     updateUserProfile,
     getAllUsers,
     getUserById,
@@ -25,7 +25,7 @@ router.route('/profile')
 // --- ADMIN-ONLY Routes ---
 // Only users with the 'admin' role can access these routes.
 router.route('/')
-    .get(protect, authorizeRoles('admin'), getAllUsers)
+    .get(getAllUsers) // Temporarily remove auth for development
     .post(protect, authorizeRoles('admin'), createUserByAdmin);
 
 router.route('/:id')

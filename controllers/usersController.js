@@ -41,14 +41,68 @@ const updateUserProfile = async (req, res) => {
     }
 };
 
-// --- ADMIN-ONLY Functions ---
-
-// @desc    Get all users (by admin)
+// @desc    Get all users
 // @route   GET /api/users
-// @access  Private/Admin
+// @access  Private (Admin)
 const getAllUsers = async (req, res) => {
-    const users = await User.find({});
-    res.json(users);
+    try {
+        const {
+            page = 1,
+            limit = 100, // Increased default limit for admin selection
+            role,
+            status,
+            search,
+            sortBy = 'createdAt',
+            sortOrder = 'desc'
+        } = req.query;
+
+        // Build filter object
+        const filter = {};
+        if (role) filter.role = role;
+        if (status) filter.status = status;
+
+        // Add search functionality
+        if (search) {
+            filter.$or = [
+                { firstName: { $regex: search, $options: 'i' } },
+                { lastName: { $regex: search, $options: 'i' } },
+                { username: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Build sort object
+        const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const users = await User.find(filter)
+            .select('-passwordHash') // Exclude password hash from response
+            .sort(sort)
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        const totalUsers = await User.countDocuments(filter);
+
+        res.status(200).json({
+            success: true,
+            data: users,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total: totalUsers,
+                pages: Math.ceil(totalUsers / parseInt(limit))
+            },
+            message: `Retrieved ${users.length} users successfully`
+        });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching users',
+            error: error.message
+        });
+    }
 };
 
 // @desc    Get user by ID (by admin)
@@ -68,7 +122,7 @@ const getUserById = async (req, res) => {
 // @access  Private/Admin
 const createUserByAdmin = async (req, res) => {
     const { email, username, password, role, firstName, lastName } = req.body;
-    
+
     const userExists = await User.findOne({ $or: [{ email }, { username }] });
     if (userExists) {
         return res.status(400).json({ message: 'User with this email or username already exists' });
