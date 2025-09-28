@@ -26,6 +26,7 @@ import AllPayments from "./pages/Allpayments.jsx";
 import Inventorys from "./pages/Inventory.jsx";
 import PayrollManagement from "./pages/PayrollManagement.jsx";
 import MyOrders from "./pages/MyOrders.jsx";
+import Notifications from "./pages/Notifications.jsx";
 
 // --- New E-commerce Pages ---
 import Home from "./pages/Home.jsx";
@@ -137,6 +138,7 @@ export default function App() {
             <Route path="edit-account" element={<EditAccount />} />
             <Route path="my-orders" element={<MyOrders />} />
             <Route path="my-booking" element={<MyBookings />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
         </Route>
         {/* --- 🏏 COACH ROUTES --- */}

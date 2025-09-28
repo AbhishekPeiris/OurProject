@@ -24,6 +24,7 @@ import groundRoutes from './routes/groundRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import playerFeedbackRoutes from './routes/playerFeedbackRoutes.js';
 import syncRoutes from './routes/sync.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 // --- Repair Service Routes ---
 import repairRoutes from './routes/repairRequestRoutes.js';
@@ -71,6 +72,7 @@ app.use('/api/grounds', groundRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/player-feedback', playerFeedbackRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // --- Repair Service API Routes ---
 app.use('/api/repairs', repairRoutes);

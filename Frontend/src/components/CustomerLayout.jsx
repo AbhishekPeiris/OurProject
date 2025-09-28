@@ -107,16 +107,41 @@ const CalendarIcon = () => (
 export default function CustomerLayout() {
     const [showSidebar, setShowSidebar] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
+    const [unreadCount, setUnreadCount] = useState(0);
     const navigate = useNavigate();
 
     useEffect(() => {
         const storedUserInfo = localStorage.getItem("userInfo");
         if (storedUserInfo) {
             setUserInfo(JSON.parse(storedUserInfo));
+            fetchUnreadNotifications();
         } else {
             navigate("/login");
         }
     }, [navigate]);
+
+    const fetchUnreadNotifications = async () => {
+        try {
+            const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+            const userId = userInfo?._id;
+
+            if (userId) {
+                const response = await fetch("/api/notifications/stats", {
+                    headers: {
+                        Authorization: `Bearer ${userInfo.token}`,
+                        "user-id": userId,
+                    },
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    setUnreadCount(data.data.overview.unread || 0);
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching unread notifications:", err);
+        }
+    };
 
     const handleLogout = () => {
         if (window.confirm("Are you sure you want to logout?")) {
@@ -186,12 +211,19 @@ export default function CustomerLayout() {
                         >
                             <CalendarIcon /> My Bookings
                         </Link>
-                        <a
-                            href="#"
-                            className="flex items-center px-4 py-3 font-medium transition-colors rounded-lg text-text-body hover:bg-secondary hover:text-white"
+                        <Link
+                            to="/customer/notifications"
+                            className="flex items-center justify-between px-4 py-3 font-medium transition-colors rounded-lg text-text-body hover:bg-secondary hover:text-white"
                         >
-                            <BellIcon /> Notifications
-                        </a>
+                            <div className="flex items-center">
+                                <BellIcon /> Notifications
+                            </div>
+                            {unreadCount > 0 && (
+                                <span className="px-2 py-1 text-xs text-white bg-red-500 rounded-full">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </Link>
                     </nav>
 
                     <div className="mt-auto">
