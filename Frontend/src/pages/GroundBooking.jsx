@@ -11,6 +11,8 @@ const GroundBooking = () => {
   const [error, setError] = useState("");
   const [selectedGround, setSelectedGround] = useState(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [mapCenter, setMapCenter] = useState({ lat: 6.9271, lng: 79.8612 }); // Default to Colombo, Sri Lanka
   const [bookingData, setBookingData] = useState({
     bookingDate: "",
     startTime: "",
@@ -270,6 +272,43 @@ const GroundBooking = () => {
     }
   };
 
+  // Function to generate Google Maps URL for multiple locations
+  const generateMapUrl = () => {
+    if (grounds.length === 0) return "";
+
+    // Create a URL with multiple markers for all grounds
+    const baseUrl = "https://www.google.com/maps/embed/v1/place";
+    const locations = grounds
+      .map((ground) => {
+        // Convert ground location to a searchable address
+        const location = ground.location || ground.name;
+        return encodeURIComponent(`${location}, Colombo, Sri Lanka`);
+      })
+      .join("|");
+
+    // Use the first ground as the center point and add all as markers
+    const centerLocation = grounds[0].location || grounds[0].name;
+    return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126742.36876216154!2d79.84732912953602!3d6.927078599999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae253d10f7a7003%3A0x320b2e4d32d3838d!2s${encodeURIComponent(
+      centerLocation + ", Colombo, Sri Lanka"
+    )}!5e0!3m2!1sen!2slk!4v1640000000000!5m2!1sen!2slk`;
+  };
+
+  // Function to generate individual ground map URL
+  const generateIndividualMapUrl = (ground) => {
+    const location = ground.location || ground.name;
+    return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.0!2d79.8612!3d6.9271!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNTUnMzcuNSJOIDc5wrA1MSc0MC4zIkU!5e0!3m2!1sen!2slk!4v1640000000000!5m2!1sen!2slk&q=${encodeURIComponent(
+      location + ", Colombo, Sri Lanka"
+    )}`;
+  };
+
+  // Function to handle view on map
+  const handleViewOnMap = (ground) => {
+    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      ground.location || ground.name + ", Colombo, Sri Lanka"
+    )}`;
+    window.open(mapUrl, "_blank");
+  };
+
   if (loading) {
     return (
       <div
@@ -303,6 +342,19 @@ const GroundBooking = () => {
           </p>
         </div>
 
+        {/* Map Toggle Button */}
+        {grounds.length > 0 && (
+          <div className="mb-8 text-center">
+            <button
+              onClick={() => setShowMap(!showMap)}
+              className="px-6 py-3 text-white transition-colors duration-200 rounded-lg shadow-md hover:opacity-90"
+              style={{ backgroundColor: Brand.secondary }}
+            >
+              {showMap ? "🏏 Show Ground List" : "🗺️ View All Grounds on Map"}
+            </button>
+          </div>
+        )}
+
         {/* Error and Success Messages */}
         {error && (
           <div className="max-w-4xl p-4 mx-auto mb-8 text-center text-red-700 bg-red-100 rounded-lg">
@@ -312,6 +364,38 @@ const GroundBooking = () => {
         {bookingSuccess && (
           <div className="max-w-4xl p-4 mx-auto mb-8 text-center text-green-700 bg-green-100 rounded-lg">
             {bookingSuccess}
+          </div>
+        )}
+
+        {/* Map View */}
+        {showMap && grounds.length > 0 && (
+          <div className="mb-8">
+            <div className="p-6 bg-white rounded-lg shadow-md">
+              <h2
+                className="mb-4 text-2xl font-bold text-center"
+                style={{ color: Brand.primary }}
+              >
+                Ground Locations Map
+              </h2>
+              <div className="w-full overflow-hidden rounded-lg h-96">
+                <iframe
+                  src={generateMapUrl()}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Cricket Grounds Locations"
+                ></iframe>
+              </div>
+              <div
+                className="mt-4 text-sm text-center"
+                style={{ color: Brand.body }}
+              >
+                📍 All available cricket grounds are marked on the map above
+              </div>
+            </div>
           </div>
         )}
 
@@ -335,11 +419,21 @@ const GroundBooking = () => {
 
               {ground.location && (
                 <div
-                  className="flex items-center gap-2 mb-4 text-sm"
+                  className="flex items-center justify-between gap-2 mb-4 text-sm"
                   style={{ color: Brand.body }}
                 >
-                  <span>📍</span>
-                  <span>{ground.location}</span>
+                  <div className="flex items-center gap-2">
+                    <span>📍</span>
+                    <span>{ground.location}</span>
+                  </div>
+                  <button
+                    onClick={() => handleViewOnMap(ground)}
+                    className="px-2 py-1 text-xs text-white transition-colors duration-200 rounded hover:opacity-80"
+                    style={{ backgroundColor: Brand.secondary }}
+                    title="View on Google Maps"
+                  >
+                    🗺️ View Map
+                  </button>
                 </div>
               )}
 
@@ -389,6 +483,23 @@ const GroundBooking = () => {
                 <strong>Available Slots:</strong> {ground.totalSlots}
               </div>
 
+              {/* Location Preview Map for Individual Ground */}
+              {ground.location && (
+                <div className="mb-4">
+                  <div className="w-full h-32 overflow-hidden rounded-lg">
+                    <iframe
+                      src={generateIndividualMapUrl(ground)}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title={`${ground.name} Location`}
+                    ></iframe>
+                  </div>
+                </div>
+              )}
+
               <button
                 className="w-full px-6 py-3 font-semibold text-white transition-colors duration-200 rounded-lg hover:opacity-90"
                 style={{ backgroundColor: Brand.primary }}
@@ -408,7 +519,7 @@ const GroundBooking = () => {
           </div>
         )}
 
-        {/* Booking Form Modal */}
+        {/* Enhanced Booking Form Modal with Location Info */}
         {showBookingForm && selectedGround && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
@@ -418,13 +529,57 @@ const GroundBooking = () => {
               }
             }}
           >
-            <div className="bg-white rounded-xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-              <h2
-                className="mb-6 text-2xl font-bold"
-                style={{ color: Brand.primary }}
-              >
-                Book {selectedGround.name}
-              </h2>
+            <div className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2
+                  className="text-2xl font-bold"
+                  style={{ color: Brand.primary }}
+                >
+                  Book {selectedGround.name}
+                </h2>
+                <button
+                  onClick={() => setShowBookingForm(false)}
+                  className="text-2xl text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Ground Location Map in Modal */}
+              {selectedGround.location && (
+                <div className="mb-6">
+                  <h3
+                    className="mb-3 text-lg font-semibold"
+                    style={{ color: Brand.heading }}
+                  >
+                    Ground Location
+                  </h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span>📍</span>
+                    <span style={{ color: Brand.body }}>
+                      {selectedGround.location}
+                    </span>
+                    <button
+                      onClick={() => handleViewOnMap(selectedGround)}
+                      className="px-3 py-1 text-xs text-white transition-colors duration-200 rounded hover:opacity-80"
+                      style={{ backgroundColor: Brand.secondary }}
+                    >
+                      🗺️ Open in Google Maps
+                    </button>
+                  </div>
+                  <div className="w-full h-48 overflow-hidden rounded-lg">
+                    <iframe
+                      src={generateIndividualMapUrl(selectedGround)}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title={`${selectedGround.name} Location`}
+                    ></iframe>
+                  </div>
+                </div>
+              )}
 
               <form onSubmit={handleBookingSubmit}>
                 {/* Booking Date */}
@@ -609,7 +764,7 @@ const GroundBooking = () => {
                   />
                 </div>
 
-                {/* Booking Summary */}
+                {/* Booking Summary with Location */}
                 <div className="p-4 mb-6 rounded-lg bg-gray-50">
                   <h4
                     className="mb-2 font-semibold"
@@ -622,6 +777,9 @@ const GroundBooking = () => {
                     style={{ color: Brand.body }}
                   >
                     <div>Ground: {selectedGround.name}</div>
+                    {selectedGround.location && (
+                      <div>Location: {selectedGround.location}</div>
+                    )}
                     <div>
                       Rate: LKR {selectedGround.pricePerSlot}/slot per hour
                     </div>
