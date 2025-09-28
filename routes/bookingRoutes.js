@@ -9,7 +9,8 @@ import {
     confirmBooking,
     cancelBooking,
     getUserBookings,
-    checkGroundAvailability
+    checkGroundAvailability,
+    exportBookingsCSV
 } from '../controllers/bookingController.js';
 
 // Middleware (uncomment when auth middleware is available)
@@ -21,6 +22,7 @@ import {
 // Admin booking management routes
 router.get('/', getBookings); // Get all bookings (Admin)
 router.post('/', createBooking); // Create booking
+router.get('/export/csv', /* protect, authorize('admin'), */ exportBookingsCSV); // Export routes
 router.get('/check-availability', checkGroundAvailability); // Check availability
 router.get('/user/:userId', getUserBookings); // Get user bookings
 router.get('/:id', getBooking); // Get single booking

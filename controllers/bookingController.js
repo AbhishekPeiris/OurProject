@@ -638,3 +638,97 @@ export const checkGroundAvailability = async (req, res) => {
         });
     }
 };
+
+// @desc    Export bookings data to CSV
+// @route   GET /api/bookings/export/csv
+// @access  Private (Admin only)
+export const exportBookingsCSV = async (req, res) => {
+    try {
+        const {
+            status,
+            type,
+            customerId,
+            groundId,
+            startDate,
+            endDate,
+            sortBy = 'createdAt',
+            sortOrder = 'desc'
+        } = req.query;
+
+        // Build filter object
+        const filter = {};
+        if (status) filter.status = status;
+        if (type) filter.type = type;
+        if (customerId) filter.customerId = customerId;
+        if (groundId) filter.groundId = groundId;
+
+        if (startDate && endDate) {
+            filter.bookingDate = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+
+        // Build sort object
+        const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
+
+        const bookings = await Booking.find(filter)
+            .populate('customerId', 'firstName lastName email phone')
+            .populate('groundId', 'name location pricePerSlot')
+            .populate('paymentId', 'amount status paymentDate')
+            .sort(sort);
+
+        // Prepare CSV data
+        const csvData = bookings.map(booking => ({
+            'Booking ID': booking._id,
+            'Customer Name': `${booking.customerId?.firstName || ''} ${booking.customerId?.lastName || ''}`.trim(),
+            'Customer Email': booking.customerId?.email || 'N/A',
+            'Customer Phone': booking.customerId?.phone || 'N/A',
+            'Ground Name': booking.groundId?.name || 'Unknown Ground',
+            'Ground Location': booking.groundId?.location || 'N/A',
+            'Ground Slot': booking.groundSlot,
+            'Booking Date': booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString() : 'N/A',
+            'Start Time': booking.startTime || 'N/A',
+            'End Time': booking.endTime || 'N/A',
+            'Duration (Minutes)': booking.duration || 'N/A',
+            'Duration (Hours)': booking.duration ? Math.ceil(booking.duration / 60) : 'N/A',
+            'Booking Type': booking.bookingType ? booking.bookingType.charAt(0).toUpperCase() + booking.bookingType.slice(1) : 'N/A',
+            'Amount (LKR)': booking.amount || 0,
+            'Status': booking.status ? booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 'N/A',
+            'Special Requirements': booking.specialRequirements && booking.specialRequirements.length > 0 ? booking.specialRequirements.join('; ') : 'None',
+            'Notes': booking.notes || 'None',
+            'Payment Status': booking.paymentId ? 'Paid' : 'Pending',
+            'Payment Amount': booking.paymentId?.amount || 'N/A',
+            'Payment Date': booking.paymentId?.paymentDate ? new Date(booking.paymentId.paymentDate).toLocaleDateString() : 'N/A',
+            'Created Date': booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : 'N/A',
+            'Updated Date': booking.updatedAt ? new Date(booking.updatedAt).toLocaleDateString() : 'N/A'
+        }));
+
+        // Convert to CSV format
+        const csvHeaders = Object.keys(csvData[0] || {});
+        const csvContent = [
+            csvHeaders.join(','),
+            ...csvData.map(row =>
+                csvHeaders.map(header => {
+                    const value = row[header] || '';
+                    // Escape commas and quotes in values
+                    const escapedValue = String(value).replace(/"/g, '""');
+                    return `"${escapedValue}"`;
+                }).join(',')
+            )
+        ].join('\n');
+
+        // Set headers for file download
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=bookings_export_${new Date().toISOString().split('T')[0]}.csv`);
+
+        res.status(200).send(csvContent);
+    } catch (error) {
+        console.error('Error exporting bookings:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error exporting bookings data',
+            error: error.message
+        });
+    }
+};

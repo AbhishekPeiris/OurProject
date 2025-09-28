@@ -6,7 +6,8 @@ import {
   createGround,
   updateGround,
   deleteGround,
-  getAvailableGroundSlots
+  getAvailableGroundSlots,
+  exportGroundsCSV
 } from '../controllers/groundController.js';
 
 // Middleware (Note: You'll need to implement these middleware functions)
@@ -14,6 +15,9 @@ import {
 
 // All routes require authentication (uncomment when auth middleware is available)
 // router.use(protect);
+
+// Export routes
+router.get('/export/csv', /* authorize('admin'), */ exportGroundsCSV);
 
 // Public routes
 router.get('/', getAllGrounds);

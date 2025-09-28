@@ -89,6 +89,7 @@ import RepairRevenue from "./pages/RepairRevenue";
 import GroundBooking from "./pages/GroundBooking.jsx";
 import MyBookings from "./pages/MyBookings.jsx";
 import AdminGroundBooking from "./pages/AdminGround/GroundBooking.jsx";
+import GroundsManage from "./pages/AdminGround/GroundsManage.jsx";
 
 // Wrapper to pass URL param
 function CustomerDashboardWrapper() {
@@ -204,6 +205,7 @@ export default function App() {
           <Route path="edit-account" element={<EditAccount />} />
           <Route path="orders" element={<ListOrders />} />
           <Route path="ground-booking" element={<AdminGroundBooking />} />
+          <Route path="grounds" element={<GroundsManage />} />
         </Route>
 
 

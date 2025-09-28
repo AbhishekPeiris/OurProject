@@ -11,7 +11,7 @@ const getAllGrounds = async (req, res) => {
     const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     const grounds = await Ground.find()
       .sort(sort)
       .skip(skip)
@@ -197,25 +197,25 @@ const getAvailableGroundSlots = async (req, res) => {
 
     for (const ground of grounds) {
       const availableSlots = [];
-      
+
       // If specific time is provided, show ALL available slots for that time
       if (startTime && endTime) {
         // Check if this ground has any conflicts for the specific time
         const hasConflict = existingSessions.some(session => {
           if (session.ground.toString() !== ground._id.toString()) return false;
-          
+
           const sessionStart = session.startTime;
           const sessionEnd = session.endTime;
           return (startTime < sessionEnd && endTime > sessionStart);
         });
-        
+
         if (!hasConflict) {
           // Get all used slots for this ground on this date
           const usedSlots = existingSessions
             .filter(session => session.ground.toString() === ground._id.toString())
             .map(session => session.groundSlot)
             .sort((a, b) => a - b);
-          
+
           // Generate ALL available slots for this time period
           // Show all slots from 1 to totalSlots that are not booked
           for (let slotNum = 1; slotNum <= ground.totalSlots; slotNum++) {
@@ -234,20 +234,20 @@ const getAvailableGroundSlots = async (req, res) => {
         // Generate all time slots for this ground (original behavior)
         const startHour = 6; // 6 AM
         const endHour = 22; // 10 PM
-        
+
         for (let hour = startHour; hour < endHour; hour += 2) { // 2-hour slots
           const slotStartTime = `${hour.toString().padStart(2, '0')}:00`;
           const slotEndTime = `${(hour + 2).toString().padStart(2, '0')}:00`;
-          
+
           // Check if this slot conflicts with existing sessions
           const hasConflict = existingSessions.some(session => {
             if (session.ground.toString() !== ground._id.toString()) return false;
-            
+
             const sessionStart = session.startTime;
             const sessionEnd = session.endTime;
             return (slotStartTime < sessionEnd && slotEndTime > sessionStart);
           });
-          
+
           if (!hasConflict) {
             availableSlots.push({
               slotNumber: Math.floor((hour - startHour) / 2) + 1,
@@ -289,11 +289,72 @@ const getAvailableGroundSlots = async (req, res) => {
   }
 };
 
+// @desc    Export grounds data to CSV
+// @route   GET /api/grounds/export/csv
+// @access  Private (Admin only)
+const exportGroundsCSV = async (req, res) => {
+  try {
+    const { status, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+    // Build filter object
+    const filter = {};
+    if (status === 'active') filter.isActive = true;
+    if (status === 'inactive') filter.isActive = false;
+
+    // Build sort object
+    const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
+
+    const grounds = await Ground.find(filter).sort(sort);
+
+    // Prepare CSV data
+    const csvData = grounds.map(ground => ({
+      'Ground ID': ground._id,
+      'Ground Name': ground.name,
+      'Location': ground.location || 'N/A',
+      'Price per Slot (LKR)': ground.pricePerSlot,
+      'Total Slots': ground.totalSlots,
+      'Description': ground.description || 'N/A',
+      'Facilities': ground.facilities ? ground.facilities.join('; ') : 'None',
+      'Equipment': ground.equipment ? ground.equipment.join('; ') : 'None',
+      'Status': ground.isActive ? 'Active' : 'Inactive',
+      'Created Date': ground.createdAt ? new Date(ground.createdAt).toLocaleDateString() : 'N/A',
+      'Updated Date': ground.updatedAt ? new Date(ground.updatedAt).toLocaleDateString() : 'N/A'
+    }));
+
+    // Convert to CSV format
+    const csvHeaders = Object.keys(csvData[0] || {});
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvData.map(row =>
+        csvHeaders.map(header => {
+          const value = row[header] || '';
+          // Escape commas and quotes in values
+          const escapedValue = String(value).replace(/"/g, '""');
+          return `"${escapedValue}"`;
+        }).join(',')
+      )
+    ].join('\n');
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=grounds_export_${new Date().toISOString().split('T')[0]}.csv`);
+
+    res.status(200).send(csvContent);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error exporting grounds data',
+      error: error.message
+    });
+  }
+};
+
 export {
   getAllGrounds,
   getGround,
   createGround,
   updateGround,
   deleteGround,
-  getAvailableGroundSlots
+  getAvailableGroundSlots,
+  exportGroundsCSV
 };
